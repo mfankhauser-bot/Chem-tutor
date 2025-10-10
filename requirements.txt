@@ -1,1 +1,1 @@
-1 stramlit
+1 streamlit>=1.25.0
