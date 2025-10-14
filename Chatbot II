@@ -1,0 +1,73 @@
+
+import streamlit as st
+import difflib
+
+# Disclosure statement
+disclosure = """
+**Disclosure Statement**
+
+This chatbot is designed to support Chemistry students by providing formative feedback on their understanding. Students can input questions they are struggling with, receive hints, submit answers, and get feedback with further learning steps. A human-in-the-loop safeguard ensures flagged responses are reviewed by a teacher. This tool promotes academic integrity, fairness, and inclusivity by encouraging honest learning, equal treatment, and supportive guidance.
+"""
+
+# Sample question-answer-hint database
+qa_database = {
+    "What is the pH of a neutral solution?": {
+        "answer": ["7", "7.0"],
+        "hint": "Think about pure water and its balance of hydrogen and hydroxide ions."
+    },
+    "What is the chemical formula for water?": {
+        "answer": ["H2O"],
+        "hint": "It consists of two hydrogen atoms and one oxygen atom."
+    },
+    "What gas do plants absorb for photosynthesis?": {
+        "answer": ["carbon dioxide", "CO2"],
+        "hint": "It's a compound exhaled by animals and used by plants."
+    }
+}
+
+# Function to find closest matching question
+def find_closest_question(user_question):
+    questions = list(qa_database.keys())
+    match = difflib.get_close_matches(user_question, questions, n=1, cutoff=0.5)
+    return match[0] if match else None
+
+# Function to check answer
+def check_student_answer(expected_answers, student_answer):
+    return student_answer.strip().lower() in [ans.lower() for ans in expected_answers]
+
+# Streamlit UI
+st.title("Chemistry Feedback Chatbot")
+st.markdown(disclosure)
+
+st.subheader("Step 1: Enter a Chemistry Question You Are Struggling With")
+user_question = st.text_input("Your question:")
+
+if user_question:
+    matched_question = find_closest_question(user_question)
+    if matched_question:
+        st.success(f"Recognized question: {matched_question}")
+        st.info(f"Hint: {qa_database[matched_question]['hint']}")
+
+        st.subheader("Step 2: Enter Your Answer")
+        student_answer = st.text_input("Your answer:")
+
+        if st.button("Submit Answer"):
+            if check_student_answer(qa_database[matched_question]['answer'], student_answer):
+                st.success("✅ Correct! Great job.")
+            else:
+                st.error("❌ Not quite right. Please review the hint and try again.")
+                st.warning("Your response has been flagged for teacher review.")
+                with open("flagged_responses.txt", "a") as f:
+                    f.write(f"Question: {matched_question}
+Student Answer: {student_answer}
+
+")
+                st.info("A teacher will review your response and provide additional guidance.")
+    else:
+        st.error("Sorry, we couldn't recognize your question. Please try rephrasing it.")
+
+st.sidebar.title("About This Tool")
+st.sidebar.markdown("""
+This chatbot helps students practise Chemistry by checking their answers and offering feedback. 
+It supports learning through self-assessment and includes teacher oversight for flagged responses.
+""")
